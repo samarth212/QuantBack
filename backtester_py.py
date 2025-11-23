@@ -1,10 +1,5 @@
 import pandas as pd
 
-short_window = 20
-long_window = 50
-
-df = pd.read_csv("data/NVDA_3M.csv")
-closes = df["Close"].to_list()
 
 def calculate_sma_series(closes, window):
     sma = [None] * len(closes)
@@ -19,7 +14,10 @@ def calculate_sma_series(closes, window):
 
     return sma
     
-def simulate_trading_strategy(closes, short_window, long_window, capital):
+def simulate_trading_strategy(closes, short_window, long_window, capital, open_price):
+
+    if capital < open_price:
+        raise ValueError("Capital is too low to buy one share of this stock.")
     
     cash = capital
     equity_curve = [capital] * len(closes)
@@ -58,7 +56,18 @@ def simulate_trading_strategy(closes, short_window, long_window, capital):
 
 
 def main() -> None:
-    print("hello")
+    
+    short_window = 20
+    long_window = 50
+
+    df = pd.read_csv("data/NVDA_1YR.csv")
+    closes = df["Close"].to_list()
+    open_price = df["Open"][0]
+
+    equity, trades = simulate_trading_strategy(closes, short_window, long_window, 190, open_price)
+
+    print(f"Final equity: {equity[-1]:.2f}")
+    print("Trades taken:", [t for t in trades if t is not None])
 
 
 if __name__ == "__main__":
