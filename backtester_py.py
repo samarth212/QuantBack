@@ -14,15 +14,16 @@ def calculate_sma_series(closes, window):
 
     return sma
     
-def simulate_trading_strategy(closes, short_window, long_window, capital, open_price):
+def simulate_trading_strategy(closes, short_window, long_window, capital, allocation_pct, fee_pct, slippage_bps, stop_loss_pct):
 
-    if capital < open_price:
-        raise ValueError("Capital is too low to buy one share of this stock.")
     
     cash = capital
     equity_curve = [capital] * len(closes)
     trades = [None] * len(closes)
     shares = 0.0
+    entry_price = None
+
+    slip = slippage_bps / 10000
 
     short_sma = calculate_sma_series(closes, short_window)
     long_sma = calculate_sma_series(closes, long_window)
@@ -30,21 +31,52 @@ def simulate_trading_strategy(closes, short_window, long_window, capital, open_p
     for i in range(long_window, len(closes)):
 
         if short_sma[i] is None or long_sma[i] is None:
+            equity_curve[i] = cash + shares * closes[i]
             continue
+        
+        
 
         diff = short_sma[i] - long_sma[i]
         prev_diff = short_sma[i-1] - long_sma[i-1]
 
+        buy_signal  = (prev_diff <= 0 and diff > 0)
+        sell_signal = (prev_diff >= 0 and diff < 0)
+
+        # stop loss sell
+        if shares > 0 and entry_price is not None:
+            if closes[i] < entry_price*(1-stop_loss_pct):
+                sell_signal = True
+
         # buy condition
-        if shares == 0 and diff > 0 and prev_diff <= 0:
-            shares = cash/closes[i]
-            cash = 0
-            trades[i] = {"side": "BUY", "price": closes[i]}
+        if cash > 0 and buy_signal:
+
+            invest = allocation_pct * cash
+            buy_price = closes[i] * (1+slip)
+
+            new_shares = invest / buy_price
+            cash -= invest
+            cash -= invest * fee_pct  # fee on buy
+
+            shares += new_shares
+
+            entry_price = buy_price
+       
+            trades[i] = {"i": i, "side": "BUY", "price": buy_price, "qty": new_shares}
+            
+
         # sell condition
-        elif shares > 0 and diff < 0 and prev_diff >= 0:
-            cash = shares * closes[i]
-            shares = 0
-            trades[i] = {"side": "SELL", "price": closes[i]}
+        elif shares > 0 and sell_signal:
+
+            sell_price = closes[i] * (1 - slip)
+            new_cash = shares * sell_price
+            cash += new_cash
+            cash -= new_cash * fee_pct  # fee on sell
+            
+            trades[i] = {"i": i, "side": "SELL", "price": sell_price, "qty": shares}
+
+            shares = 0.0
+            entry_price = None
+
 
         # add portfolio value
         equity_curve[i] = cash + shares * closes[i]
@@ -62,9 +94,8 @@ def main() -> None:
 
     df = pd.read_csv("data/NVDA_1YR.csv")
     closes = df["Close"].to_list()
-    open_price = df["Open"][0]
 
-    equity, trades = simulate_trading_strategy(closes, short_window, long_window, 190, open_price)
+    equity, trades = simulate_trading_strategy(closes, short_window, long_window, 10000, 0.50, 0.001, 5, 0.08)
 
     print(f"Final equity: {equity[-1]:.2f}")
     print("Trades taken:", [t for t in trades if t is not None])
