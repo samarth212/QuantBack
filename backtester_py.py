@@ -16,7 +16,6 @@ def calculate_sma_series(closes, window):
     
 def simulate_trading_strategy(closes, short_window, long_window, capital, allocation_pct, fee_pct, slippage_bps, stop_loss_pct):
 
-    
     cash = capital
     equity_curve = [capital] * len(closes)
     trades = [None] * len(closes)
@@ -83,6 +82,12 @@ def simulate_trading_strategy(closes, short_window, long_window, capital, alloca
     
     
     return equity_curve, trades
+
+def calculate_return(equity_curve):
+    start = equity_curve[0]
+    end = equity_curve[-1]
+    return (end-start)/start
+
 
     
 
