@@ -126,9 +126,21 @@ def calculate_avg_trade_return(trades):
     return sum(trade_returns)/ closed if closed > 0 else 0.0
 
 
+def calculate_mdd(equity_curve):
 
-    
+    max_price = equity_curve[0]
+    mdd = 0.0
 
+    for i in equity_curve:
+        if i is None:
+            continue
+        if i > max_price:
+            max_price = i
+        dd = (i - max_price)/max_price
+        if dd < mdd:
+            mdd = dd
+
+    return mdd
 
 def main() -> None:
     
