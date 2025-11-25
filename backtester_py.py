@@ -97,7 +97,7 @@ def calculate_win_rate(trades):
             if open_buy_price is None:
                 open_buy_price = i["price"]
 
-        elif t["side"] == "SELL":
+        elif i["side"] == "SELL":
             if open_buy_price is not None:
                 closed += 1
                 if i["price"] > open_buy_price:
@@ -105,6 +105,27 @@ def calculate_win_rate(trades):
                 open_buy_price = None  
 
     return wins / closed if closed > 0 else 0.0
+
+def calculate_avg_trade_return(trades):
+    trade_returns = []
+    closed = 0
+    open_buy_price = None
+
+    for i in trades:
+        if i["side"] == "BUY":
+            if open_buy_price is None:
+                open_buy_price = i["price"]
+
+        elif i["side"] == "SELL":
+            if open_buy_price is not None:
+                closed += 1
+                trade_returns.append((i["price"] - open_buy_price)/open_buy_price)
+                open_buy_price = None  
+
+    
+    return sum(trade_returns)/ closed if closed > 0 else 0.0
+
+
 
     
 
