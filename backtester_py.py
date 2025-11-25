@@ -1,6 +1,5 @@
 import pandas as pd
 
-
 def calculate_sma_series(closes, window):
     sma = [None] * len(closes)
     running_sum = 0.0
@@ -16,7 +15,6 @@ def calculate_sma_series(closes, window):
     
 def simulate_trading_strategy(closes, short_window, long_window, capital, allocation_pct, fee_pct, slippage_bps, stop_loss_pct):
 
-    
     cash = capital
     equity_curve = [capital] * len(closes)
     trades = [None] * len(closes)
@@ -84,8 +82,65 @@ def simulate_trading_strategy(closes, short_window, long_window, capital, alloca
     
     return equity_curve, trades
 
-    
+def calculate_return(equity_curve):
+    start = equity_curve[0]
+    end = equity_curve[-1]
+    return (end-start)/start
 
+def calculate_win_rate(trades):
+    wins = 0
+    closed = 0
+    open_buy_price = None
+
+    for i in trades:
+        if i["side"] == "BUY":
+            if open_buy_price is None:
+                open_buy_price = i["price"]
+
+        elif i["side"] == "SELL":
+            if open_buy_price is not None:
+                closed += 1
+                if i["price"] > open_buy_price:
+                    wins += 1
+                open_buy_price = None  
+
+    return wins / closed if closed > 0 else 0.0
+
+def calculate_avg_trade_return(trades):
+    trade_returns = []
+    closed = 0
+    open_buy_price = None
+
+    for i in trades:
+        if i["side"] == "BUY":
+            if open_buy_price is None:
+                open_buy_price = i["price"]
+
+        elif i["side"] == "SELL":
+            if open_buy_price is not None:
+                closed += 1
+                trade_returns.append((i["price"] - open_buy_price)/open_buy_price)
+                open_buy_price = None  
+
+    
+    return sum(trade_returns)/ closed if closed > 0 else 0.0
+
+
+def calculate_mdd(equity_curve):
+
+    max_price = equity_curve[0]
+    mdd = 0.0
+
+    for i in equity_curve:
+        if i is None:
+            continue
+        if i > max_price:
+            max_price = i
+        dd = (i - max_price)/max_price
+        if dd < mdd:
+            mdd = dd
+
+    return mdd
 
 def main() -> None:
     
