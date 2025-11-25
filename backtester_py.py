@@ -1,6 +1,5 @@
 import pandas as pd
 
-
 def calculate_sma_series(closes, window):
     sma = [None] * len(closes)
     running_sum = 0.0
@@ -88,6 +87,24 @@ def calculate_return(equity_curve):
     end = equity_curve[-1]
     return (end-start)/start
 
+def calculate_win_rate(trades):
+    wins = 0
+    closed = 0
+    open_buy_price = None
+
+    for i in trades:
+        if i["side"] == "BUY":
+            if open_buy_price is None:
+                open_buy_price = i["price"]
+
+        elif t["side"] == "SELL":
+            if open_buy_price is not None:
+                closed += 1
+                if i["price"] > open_buy_price:
+                    wins += 1
+                open_buy_price = None  
+
+    return wins / closed if closed > 0 else 0.0
 
     
 
