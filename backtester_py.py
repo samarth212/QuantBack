@@ -142,6 +142,101 @@ def calculate_mdd(equity_curve):
 
     return mdd
 
+def calculate_profit_factor(trades):
+
+    trade_returns = []
+    open_buy_price = None
+
+    for i in trades:
+        if i["side"] == "BUY":
+            if open_buy_price is None:
+                open_buy_price = i["price"]
+
+        elif i["side"] == "SELL":
+            if open_buy_price is not None:
+                trade_returns.append(i["price"] - open_buy_price)
+                open_buy_price = None  
+
+    profits = 0.0
+    losses = 0.0
+
+    for i in trade_returns:
+        if i > 0:
+            profits += i
+        elif i < 0:
+            losses += i
+
+    if losses < 0:
+        return profits / abs(losses)
+    else:
+        if profits > 0:
+            return float("inf")
+        else:
+            return 0.0
+
+def calculate_exposure_time(trades):
+
+    is_open = False
+    exposed_days = 0
+
+    for i in range(len(trades)):
+        t = trades[i]
+        if t is not None:
+            if t["side"] == "BUY" and not is_open:
+                is_open = True
+            elif t["side"] == "SELL" and is_open:
+                is_open = False
+
+        if is_open:
+            exposed_days += 1
+
+    return exposed_days / len(trades) if len(trades) > 0 else 0.0
+
+def calculate_holding_time(trades): 
+    holding_times = [] 
+    is_open = False 
+    day_opened = 0 
+    for i in range(len(trades)):  
+        if trades[i] is None:
+            continue
+        if trades[i]["side"] == "BUY": 
+            if not is_open: 
+                is_open = True 
+                day_opened = i 
+        elif trades[i]["side"] == "SELL": 
+            if is_open: 
+                holding_times.append(i-day_opened) 
+                is_open = False 
+
+    return sum(holding_times) / len(holding_times) if len(holding_times) > 0 else 0.0 
+
+import statistics
+import math
+
+def calculate_volatility(equity_curve, trading_days_per_year=252):
+    daily_returns = []
+
+    for i in range(1, len(equity_curve)):
+        prev = equity_curve[i-1]
+        curr = equity_curve[i]
+
+        if prev is None or curr is None:
+            continue
+        if prev == 0:
+            continue 
+
+        r = (curr - prev) / prev
+        daily_returns.append(r)
+
+    if len(daily_returns) < 2:
+        return 0.0
+
+    daily_std = statistics.stdev(daily_returns)
+
+    annualized_vol = daily_std * math.sqrt(trading_days_per_year)
+
+    return annualized_vol
+
 def main() -> None:
     
     short_window = 20
