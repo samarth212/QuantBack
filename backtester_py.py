@@ -142,6 +142,41 @@ def calculate_mdd(equity_curve):
 
     return mdd
 
+def calculate_profit_factor(trades):
+
+    trade_returns = []
+    closed = 0
+    open_buy_price = None
+
+    for i in trades:
+        if i["side"] == "BUY":
+            if open_buy_price is None:
+                open_buy_price = i["price"]
+
+        elif i["side"] == "SELL":
+            if open_buy_price is not None:
+                closed += 1
+                trade_returns.append(i["price"] - open_buy_price)
+                open_buy_price = None  
+
+    profits = 0.0
+    losses = 0.0
+    
+    for i in trade_returns:
+        if i > 0:
+            profits += i
+        elif i < 0:
+            losses += i
+
+    if losses < 0:
+        return profits / abs(losses)
+    else:
+        if profits > 0:
+            return float("inf")
+        else:
+            return 0.0
+
+
 def main() -> None:
     
     short_window = 20
