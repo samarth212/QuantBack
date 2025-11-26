@@ -145,7 +145,6 @@ def calculate_mdd(equity_curve):
 def calculate_profit_factor(trades):
 
     trade_returns = []
-    closed = 0
     open_buy_price = None
 
     for i in trades:
@@ -155,13 +154,12 @@ def calculate_profit_factor(trades):
 
         elif i["side"] == "SELL":
             if open_buy_price is not None:
-                closed += 1
                 trade_returns.append(i["price"] - open_buy_price)
                 open_buy_price = None  
 
     profits = 0.0
     losses = 0.0
-    
+
     for i in trade_returns:
         if i > 0:
             profits += i
@@ -175,6 +173,26 @@ def calculate_profit_factor(trades):
             return float("inf")
         else:
             return 0.0
+
+def calculate_exposure_time(trades):
+
+    is_open = False
+    exposed_days = 0
+    num_days = len(trades)
+
+    for i in range(num_days):
+        t = trades[i]
+        if t is not None:
+            if t["side"] == "BUY" and not is_open:
+                is_open = True
+            elif t["side"] == "SELL" and is_open:
+                is_open = False
+
+        if is_open:
+            exposed_days += 1
+
+    return exposed_days / num_days if num_days > 0 else 0.0
+
 
 
 def main() -> None:
