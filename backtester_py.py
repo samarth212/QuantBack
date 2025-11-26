@@ -192,6 +192,23 @@ def calculate_exposure_time(trades):
 
     return exposed_days / len(trades) if len(trades) > 0 else 0.0
 
+def calculate_holding_time(trades): 
+    holding_times = [] 
+    is_open = False 
+    day_opened = 0 
+    for i in range(len(trades)):  
+        if trades[i] is None:
+            continue
+        if trades[i]["side"] == "BUY": 
+            if not is_open: 
+                is_open = True 
+                day_opened = i 
+        elif trades[i]["side"] == "SELL": 
+            if is_open: 
+                holding_times.append(i-day_opened) 
+                is_open = False 
+
+    return sum(holding_times) / len(holding_times) if len(holding_times) > 0 else 0.0 
 
 
 def main() -> None:
