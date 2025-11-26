@@ -178,9 +178,8 @@ def calculate_exposure_time(trades):
 
     is_open = False
     exposed_days = 0
-    num_days = len(trades)
 
-    for i in range(num_days):
+    for i in range(len(trades)):
         t = trades[i]
         if t is not None:
             if t["side"] == "BUY" and not is_open:
@@ -191,7 +190,7 @@ def calculate_exposure_time(trades):
         if is_open:
             exposed_days += 1
 
-    return exposed_days / num_days if num_days > 0 else 0.0
+    return exposed_days / len(trades) if len(trades) > 0 else 0.0
 
 
 
