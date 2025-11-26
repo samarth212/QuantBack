@@ -210,6 +210,32 @@ def calculate_holding_time(trades):
 
     return sum(holding_times) / len(holding_times) if len(holding_times) > 0 else 0.0 
 
+import statistics
+import math
+
+def calculate_volatility(equity_curve, trading_days_per_year=252):
+    daily_returns = []
+
+    for i in range(1, len(equity_curve)):
+        prev = equity_curve[i-1]
+        curr = equity_curve[i]
+
+        if prev is None or curr is None:
+            continue
+        if prev == 0:
+            continue 
+
+        r = (curr - prev) / prev
+        daily_returns.append(r)
+
+    if len(daily_returns) < 2:
+        return 0.0
+
+    daily_std = statistics.stdev(daily_returns)
+
+    annualized_vol = daily_std * math.sqrt(trading_days_per_year)
+
+    return annualized_vol
 
 def main() -> None:
     
